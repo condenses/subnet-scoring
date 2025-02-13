@@ -6,6 +6,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 from typing import List
 import uvicorn
+from loguru import logger
 
 
 class Message(BaseModel):
@@ -55,13 +56,17 @@ class App:
         ).to(self.device)
         original_score = self.reward_model(original_tokenized).logits[0][0].item()
         compressed_score = self.reward_model(compressed_tokenized).logits[0][0].item()
+        logger.info(
+            f"original_score: {original_score}, compressed_score: {compressed_score}"
+        )
         if original_score > 0 and compressed_score > 0:
             compress_gain = compressed_score / (original_score + 1e-6)
-        elif original_score > 0:
+        elif original_score < 0 and compressed_score < 0:
             compress_gain = original_score / (compressed_score + 1e-6)
         else:
             compress_gain = 0
         score = self.original_base_reward * min(1, compress_gain)
+        logger.info(f"compress_gain: {compress_gain}, score: {score}")
         return ScoringResponse(score=score)
 
 
