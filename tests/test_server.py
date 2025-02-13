@@ -17,14 +17,14 @@ def test_scoring_endpoint(base_url):
         original_messages=[
             Message(role="user", content="Hello, how are you?"),
             Message(role="assistant", content="I'm doing well, thank you!"),
-            Message(role="user", content="That's great!"),
-            Message(role="assistant", content="Indeed it is!"),
         ],
         compressed_messages=[
-            Message(role="user", content="Hi"),
-            Message(role="assistant", content="I'm doing well, thank you!"),
-            Message(role="user", content="Great!"),
-            Message(role="assistant", content="Indeed it is!"),
+            Message(role="user", content="Hi", is_compressed=True),
+            Message(
+                role="assistant",
+                content="I'm doing well, thank you!",
+                is_compressed=False,
+            ),
         ],
     )
 
@@ -62,6 +62,7 @@ def test_scoring_endpoint_long_text(base_url):
         Message(
             role="assistant",
             content=compressed_completion,
+            is_compressed=True,
         ),
     ]
 

@@ -50,6 +50,8 @@ class ScoringModel:
         ).to(self.device)
         return self.model(tokenized).logits[0][0].item()
 
+    
+
 
 class App:
     def __init__(self):

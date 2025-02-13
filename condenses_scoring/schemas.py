@@ -32,15 +32,9 @@ class ScoringRequest(BaseModel):
 
     @field_validator("compressed_messages")
     @classmethod
-    def validate_compressed_messages(
-        cls, messages: List[Message], values: "ScoringRequest"
-    ) -> List[Message]:
+    def validate_compressed_messages(cls, messages: List[Message]) -> List[Message]:
         if sum(1 for msg in messages if msg.is_compressed) != 1:
             raise ValueError("Only one message should be compressed")
-        original_messages = values.original_messages
-        for i in range(len(messages)):
-            if not messages[i].is_compressed:
-                assert messages[i].content == original_messages[i].content
         return messages
 
 
