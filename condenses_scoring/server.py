@@ -39,7 +39,7 @@ class ScoringModel:
         self.prompt_guard = pipeline(
             "text-classification",
             model="meta-llama/Prompt-Guard-86M",
-            device_map="auto",
+            device_map=self.device,
         )
 
     @torch.no_grad()
@@ -89,8 +89,8 @@ class App:
                         "Prompt guard detection",
                         extra={
                             "event": "prompt_guard_failed",
-                            "content_preview": comp_msg.content[:100]
-                        }
+                            "content_preview": comp_msg.content[:100],
+                        },
                     )
                     return ScoringResponse(score=0.0)
                 compressed_rate = self.calculate_compression_rate(
@@ -98,10 +98,7 @@ class App:
                 )
                 logger.info(
                     "Compression rate calculated",
-                    extra={
-                        "event": "compression_rate",
-                        "value": compressed_rate
-                    }
+                    extra={"event": "compression_rate", "value": compressed_rate},
                 )
                 break
 
@@ -116,8 +113,8 @@ class App:
             extra={
                 "event": "scoring_complete",
                 "original_score": original_score,
-                "compressed_score": compressed_score
-            }
+                "compressed_score": compressed_score,
+            },
         )
 
         # Calculate final score
@@ -132,8 +129,8 @@ class App:
             extra={
                 "event": "final_score",
                 "compress_gain": compress_gain,
-                "score": score
-            }
+                "score": score,
+            },
         )
         return ScoringResponse(score=score)
 
