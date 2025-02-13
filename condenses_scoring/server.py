@@ -42,6 +42,10 @@ class ScoringModel:
             device_map=self.device,
         )
 
+    def guarding(self, prompt: str) -> bool:
+        result = self.prompt_guard(prompt)
+        return result[0]["label"] == "JAILBREAK"
+
     @torch.no_grad()
     def score_messages(self, messages) -> float:
         """Score a set of messages using the reward model."""
@@ -49,8 +53,6 @@ class ScoringModel:
             messages, tokenize=True, return_tensors="pt"
         ).to(self.device)
         return self.model(tokenized).logits[0][0].item()
-
-    
 
 
 class App:
@@ -76,17 +78,13 @@ class App:
         n_original = len(self.tiktoken_encoder.encode(original_msg))
         return n_compressed / n_original
 
-    def guarding(self, prompt: str) -> bool:
-        result = self.prompt_guard(prompt)
-        return result[0]["label"] == "JAILBREAK"
-
     def api_scoring(self, request: ScoringRequest) -> ScoringResponse:
         # Find compressed message and calculate compression rate
         for comp_msg, orig_msg in zip(
             request.compressed_messages, request.original_messages
         ):
             if comp_msg.is_compressed:
-                if self.guarding(comp_msg.content):
+                if self.scoring_model.guarding(comp_msg.content):
                     logger.warning(
                         "Prompt guard detection",
                         extra={
