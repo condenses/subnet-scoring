@@ -38,7 +38,7 @@ class App:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.original_base_reward = 0.75
 
-        self.app.add_route(
+        self.app.add_api_route(
             "/api/scoring",
             self.api_scoring,
             methods=["POST"],
