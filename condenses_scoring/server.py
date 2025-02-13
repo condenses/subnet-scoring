@@ -38,7 +38,7 @@ class ScoringModel:
 
         self.prompt_guard = pipeline(
             "text-classification",
-            model="meta-llama/Prompt-Guard-86M",
+            model="katanemo/Arch-Guard",
             device_map=self.device,
         )
 
