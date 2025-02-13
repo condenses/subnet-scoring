@@ -1,35 +1,63 @@
 from fastapi import FastAPI
-from openai import OpenAI
 import os
+from openai import OpenAI
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import uvicorn
 from loguru import logger
-from .schemas import ScoringRequest, ScoringResponse
 import numpy as np
+import tiktoken
+from .schemas import ScoringRequest, ScoringResponse
+from transformers import pipeline
 
-TEMPERATURE = 1.5
+# Constants
+TEMPERATURE = float(os.getenv("NCS_TEMPERATURE", 1.5))
+COMPRESSION_SCALE = float(os.getenv("NCS_COMPRESSION_SCALE", 0.2))
+TIKTOKEN_MODEL = os.getenv("NCS_TIKTOKEN_MODEL", "gpt-4o")
+DEFAULT_HOST = os.getenv("NCS_SCORING_HOST", "0.0.0.0")
+DEFAULT_PORT = int(os.getenv("NCS_SCORING_PORT", 8000))
 
 
-def sigmoid(x):
+def sigmoid(x: float) -> float:
+    """Apply sigmoid function with temperature scaling."""
     return 1 / (1 + np.exp(-x / TEMPERATURE))
 
 
-class App:
+class ScoringModel:
     def __init__(self):
-        self.app = FastAPI()
-        self.llm_client = OpenAI()
         model_name = "Skywork/Skywork-Reward-Gemma-2-27B-v0.2"
-        self.reward_model = AutoModelForSequenceClassification.from_pretrained(
+        self.model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map="auto",
             attn_implementation="flash_attention_2",
             num_labels=1,
         )
-        self.reward_tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.prompt_guard = pipeline(
+            "text-classification",
+            model="meta-llama/Prompt-Guard-86M",
+            device_map="auto",
+        )
+
+    @torch.no_grad()
+    def score_messages(self, messages) -> float:
+        """Score a set of messages using the reward model."""
+        tokenized = self.tokenizer.apply_chat_template(
+            messages, tokenize=True, return_tensors="pt"
+        ).to(self.device)
+        return self.model(tokenized).logits[0][0].item()
+
+
+class App:
+    def __init__(self):
+        self.app = FastAPI()
+        self.llm_client = OpenAI()
+        self.scoring_model = ScoringModel()
         self.original_base_reward = 0.75
+        self.tiktoken_encoder = tiktoken.encoding_for_model(TIKTOKEN_MODEL)
 
         self.app.add_api_route(
             "/api/scoring",
@@ -38,22 +66,75 @@ class App:
             response_model=ScoringResponse,
         )
 
-    @torch.no_grad()
+    def calculate_compression_rate(
+        self, compressed_msg: str, original_msg: str
+    ) -> float:
+        """Calculate the compression rate between two messages."""
+        n_compressed = len(self.tiktoken_encoder.encode(compressed_msg))
+        n_original = len(self.tiktoken_encoder.encode(original_msg))
+        return n_compressed / n_original
+
+    def guarding(self, prompt: str) -> bool:
+        result = self.prompt_guard(prompt)
+        return result[0]["label"] == "JAILBREAK"
+
     def api_scoring(self, request: ScoringRequest) -> ScoringResponse:
-        original_tokenized = self.reward_tokenizer.apply_chat_template(
-            request.original_messages, tokenize=True, return_tensors="pt"
-        ).to(self.device)
-        compressed_tokenized = self.reward_tokenizer.apply_chat_template(
-            request.compressed_messages, tokenize=True, return_tensors="pt"
-        ).to(self.device)
-        original_score = self.reward_model(original_tokenized).logits[0][0].item()
-        compressed_score = self.reward_model(compressed_tokenized).logits[0][0].item()
-        logger.info(
-            f"original_score: {original_score}, compressed_score: {compressed_score}"
+        # Find compressed message and calculate compression rate
+        for comp_msg, orig_msg in zip(
+            request.compressed_messages, request.original_messages
+        ):
+            if comp_msg.is_compressed:
+                if self.guarding(comp_msg.content):
+                    logger.warning(
+                        "Prompt guard detection",
+                        extra={
+                            "event": "prompt_guard_failed",
+                            "content_preview": comp_msg.content[:100]
+                        }
+                    )
+                    return ScoringResponse(score=0.0)
+                compressed_rate = self.calculate_compression_rate(
+                    comp_msg.content, orig_msg.content
+                )
+                logger.info(
+                    "Compression rate calculated",
+                    extra={
+                        "event": "compression_rate",
+                        "value": compressed_rate
+                    }
+                )
+                break
+
+        # Calculate scores
+        original_score = self.scoring_model.score_messages(request.original_messages)
+        compressed_score = self.scoring_model.score_messages(
+            request.compressed_messages
         )
+
+        logger.info(
+            "Scoring completed",
+            extra={
+                "event": "scoring_complete",
+                "original_score": original_score,
+                "compressed_score": compressed_score
+            }
+        )
+
+        # Calculate final score
         compress_gain = sigmoid(compressed_score) / sigmoid(original_score)
-        score = self.original_base_reward * compress_gain
-        logger.info(f"compress_gain: {compress_gain}, score: {score}")
+        score = (
+            self.original_base_reward * compress_gain * (1 - COMPRESSION_SCALE)
+            + COMPRESSION_SCALE * compressed_rate
+        )
+
+        logger.info(
+            "Final score calculated",
+            extra={
+                "event": "final_score",
+                "compress_gain": compress_gain,
+                "score": score
+            }
+        )
         return ScoringResponse(score=score)
 
 
@@ -61,8 +142,8 @@ def start_server():
     app = App()
     uvicorn.run(
         app.app,
-        host=os.getenv("CONDENSES_SCORING_HOST", "0.0.0.0"),
-        port=int(os.getenv("CONDENSES_SCORING_PORT", 8000)),
+        host=os.getenv("NCS_SCORING_HOST", DEFAULT_HOST),
+        port=int(os.getenv("NCS_SCORING_PORT", DEFAULT_PORT)),
     )
 
 
