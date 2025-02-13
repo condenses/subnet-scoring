@@ -26,3 +26,6 @@ packages = ["condenses_scoring"]
 
 [tool.hatch.envs.default.env-vars]
 HF_HUB_ENABLE_HF_TRANSFER = "1"
+
+[tool.uv]
+no-build-isolation-package = ["flash-attn"]
