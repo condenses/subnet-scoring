@@ -6,7 +6,11 @@ import torch
 import uvicorn
 from loguru import logger
 from .schemas import ScoringRequest, ScoringResponse
-import torch.nn.functional as F
+import numpy as np
+
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 
 class App:
@@ -45,7 +49,7 @@ class App:
         logger.info(
             f"original_score: {original_score}, compressed_score: {compressed_score}"
         )
-        compress_gain = (F.sigmoid(compressed_score) / F.sigmoid(original_score)).item()
+        compress_gain = sigmoid(compressed_score) / sigmoid(original_score)
         score = self.original_base_reward * compress_gain
         logger.info(f"compress_gain: {compress_gain}, score: {score}")
         return ScoringResponse(score=score)
