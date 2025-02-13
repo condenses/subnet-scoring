@@ -13,5 +13,5 @@ dependencies = [
     "transformers>=4.48.3",
     "uvicorn>=0.34.0",
 ]
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.hatch.build.targets.wheel]
+packages = ["condenses_scoring"]
