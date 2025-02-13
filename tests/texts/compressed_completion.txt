@@ -1,0 +1,92 @@
+The task requires calculating the minimum number of clone puppets that must be created to ensure that the demonstration involves at least a certain percentage of the city’s population.
+
+Let's break down the approach:
+
+### Problem Breakdown:
+
+1. **Input Parameters**:
+   - `n`: Total number of city residents.
+   - `x`: Number of wizards.
+   - `y`: Minimum required percentage of the total population that must attend the demonstration.
+   
+2. **Calculation**:
+   - The required number of attendees is given by \( \text{required\_attendees} = \left\lceil \frac{y \times n}{100} \right\rceil \), where \( \lceil \cdot \rceil \) represents rounding up.
+   - Initially, we have `x` wizards available to attend the demonstration. However, since clone puppets can be created to add to the crowd, the number of actual participants is increased by the number of clones.
+   - To ensure the demonstration meets the required size, we calculate how many additional participants (clones) are needed: \( \text{additional\_clones} = \max(0, \text{required\_attendees} - x) \).
+
+3. **Output**:
+   - We print the minimum number of clone puppets needed to ensure the required crowd size is met.
+
+### Code Implementation:
+
+```python
+import math
+
+def min_clone_puppets(n, x, y):
+    # Calculate required attendees (rounding up)
+    required_attendees = math.ceil((y / 100) * n)
+    
+    # Calculate the minimum number of clone puppets needed
+    additional_clones = max(0, required_attendees - x)
+    
+    return additional_clones
+
+# Read inputs
+n, x, y = map(int, input().split())
+
+# Call the function and print the result
+print(min_clone_puppets(n, x, y))
+```
+
+### Explanation of the Code:
+1. **Input Parsing**: We read the three integers `n`, `x`, and `y` from the input.
+2. **Calculating Required Attendees**: We calculate the minimum required attendees using the formula \( \text{required\_attendees} = \left\lceil \frac{y \times n}{100} \right\rceil \).
+3. **Determine Number of Clones**: We subtract the number of existing wizards `x` from the required attendees. If the result is positive, we return that number as the number of clones needed; otherwise, we return zero.
+4. **Output**: We print the result which is the minimum number of clone puppets required.
+
+### Examples:
+
+#### Example 1:
+Input:
+```
+10 1 14
+```
+Steps:
+- Total population `n = 10`, wizards `x = 1`, required percentage `y = 14`.
+- Required attendees = \( \lceil \frac{14 \times 10}{100} \rceil = 2 \).
+- The wizards already present are 1, so we need \( 2 - 1 = 1 \) clone puppet.
+
+Output:
+```
+1
+```
+
+#### Example 2:
+Input:
+```
+20 10 50
+```
+Steps:
+- Total population `n = 20`, wizards `x = 10`, required percentage `y = 50`.
+- Required attendees = \( \lceil \frac{50 \times 20}{100} \rceil = 10 \).
+- The wizards already present are 10, so no clones are needed.
+
+Output:
+```
+0
+```
+
+#### Example 3:
+Input:
+```
+1000 352 146
+```
+Steps:
+- Total population `n = 1000`, wizards `x = 352`, required percentage `y = 146`.
+- Required attendees = \( \lceil \frac{146 \times 1000}{100} \rceil = 1460 \).
+- The wizards already present are 352, so we need \( 1460 - 352 = 1108 \) clone puppets.
+
+Output:
+```
+1108
+```

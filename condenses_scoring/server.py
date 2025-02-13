@@ -19,7 +19,7 @@ class App:
     def __init__(self):
         self.app = FastAPI()
         self.llm_client = OpenAI()
-        model_name = "Skywork/Skywork-Reward-Llama-3.1-8B-v0.2"
+        model_name = "Skywork/Skywork-Reward-Gemma-2-27B-v0.2"
         self.reward_model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,

@@ -38,6 +38,48 @@ def test_scoring_endpoint(base_url):
     assert 0 <= response.json()["score"] <= 1
 
 
+def test_scoring_endpoint_long_text(base_url):
+    # Prepare test data with longer messages
+    with open("tests/texts/original_completion.txt", "r") as f:
+        original_completion = f.read()
+    with open("tests/texts/compressed_completion.txt", "r") as f:
+        compressed_completion = f.read()
+    with open("tests/texts/long_prompt.txt", "r") as f:
+        long_prompt = f.read()
+    long_original = [
+        Message(
+            role="user",
+            content=long_prompt,
+        ),
+        Message(
+            role="assistant",
+            content=original_completion,
+        ),
+    ]
+
+    long_compressed = [
+        Message(role="user", content=long_prompt),
+        Message(
+            role="assistant",
+            content=compressed_completion,
+        ),
+    ]
+
+    test_request = ScoringRequest(
+        original_messages=long_original,
+        compressed_messages=long_compressed,
+    )
+
+    # Make request to the endpoint
+    response = requests.post(f"{base_url}/api/scoring", json=test_request.model_dump())
+
+    # Assert response
+    assert response.status_code == 200
+    assert "score" in response.json()
+    assert isinstance(response.json()["score"], float)
+    assert 0 <= response.json()["score"] <= 1
+
+
 def test_scoring_endpoint_validation_errors(base_url):
     # Test cases for different validation scenarios
     test_cases = [

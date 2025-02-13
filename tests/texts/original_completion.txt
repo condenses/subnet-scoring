@@ -1,0 +1,106 @@
+To solve this problem, we need to calculate how many clone puppets are required to ensure that the demonstration involves at least a certain percentage of the total population, considering both wizards and the clone puppets they create.
+
+### Steps:
+1. **Calculate the required number of participants**:  
+   We need to determine how many people are needed to meet or exceed `y%` of the total population `n`. This is done by:
+   \[
+   \text{required\_attendance} = \lceil \frac{y \times n}{100} \rceil
+   \]
+   where `\lceil \cdot \rceil` represents the ceiling function, which rounds up to the nearest integer. This ensures that if the percentage requires a fractional person, we count one additional individual.
+
+2. **Determine the shortfall**:  
+   After determining the required attendance, check if the wizards alone can meet this requirement. If the number of wizards (`x`) is less than the required attendance, we need to calculate how many more participants are needed:
+   \[
+   \text{clone\_puppets\_needed} = \text{required\_attendance} - x
+   \]
+   If the wizards' number is sufficient, no clone puppets are needed.
+
+3. **Return the result**:  
+   If the wizards are enough, the output is `0`. Otherwise, output the number of clone puppets required.
+
+### Algorithm:
+1. Calculate the required attendance using the ceiling of `(y * n) / 100`.
+2. If the number of wizards is less than the required attendance, print the difference.
+3. If the wizards are enough, print `0`.
+
+### Python Code:
+
+```python
+import math
+
+def minimum_clones(n, x, y):
+    required_attendance = math.ceil(y * n / 100)
+    if x >= required_attendance:
+        return 0
+    else:
+        return required_attendance - x
+
+# Reading input
+n, x, y = map(int, input().split())
+
+# Output the result
+print(minimum_clones(n, x, y))
+```
+
+### Explanation of the Code:
+- The `math.ceil()` function is used to calculate the ceiling of the required attendance.
+- The function checks if the number of wizards (`x`) is already sufficient to meet the required attendance. If not, it calculates how many more participants are needed and returns that number.
+- The program reads the input, applies the logic, and prints the result.
+
+### Time Complexity:
+- The solution runs in constant time `O(1)` because all operations (multiplication, division, ceiling, comparison) take constant time.
+
+### Example Walkthrough:
+
+#### Example 1:
+Input:
+```
+10 1 14
+```
+- Total population `n = 10`, wizards `x = 1`, required percentage `y = 14`.
+- Calculate the required attendance:  
+  \[
+  \lceil \frac{14 \times 10}{100} \rceil = \lceil 1.4 \rceil = 2
+  \]
+- Since there is only 1 wizard, we need 1 more participant.  
+Output:
+```
+1
+```
+
+#### Example 2:
+Input:
+```
+20 10 50
+```
+- Total population `n = 20`, wizards `x = 10`, required percentage `y = 50`.
+- Calculate the required attendance:  
+  \[
+  \lceil \frac{50 \times 20}{100} \rceil = \lceil 10 \rceil = 10
+  \]
+- The 10 wizards are already enough to meet the required attendance.  
+Output:
+```
+0
+```
+
+#### Example 3:
+Input:
+```
+1000 352 146
+```
+- Total population `n = 1000`, wizards `x = 352`, required percentage `y = 146`.
+- Calculate the required attendance:  
+  \[
+  \lceil \frac{146 \times 1000}{100} \rceil = \lceil 1460 \rceil = 1460
+  \]
+- The required attendance is 1460, but there are only 352 wizards, so we need:  
+  \[
+  1460 - 352 = 1108 \, \text{clone puppets}
+  \]
+Output:
+```
+1108
+```
+
+This approach ensures that the demonstration meets the required participation percentage efficiently.
