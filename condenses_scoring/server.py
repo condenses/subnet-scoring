@@ -1,26 +1,11 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 from openai import OpenAI
 import os
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
-from typing import List
 import uvicorn
 from loguru import logger
-
-
-class Message(BaseModel):
-    role: str
-    content: str
-
-
-class ScoringRequest(BaseModel):
-    original_messages: List[Message]
-    compressed_messages: List[Message]
-
-
-class ScoringResponse(BaseModel):
-    score: float
+from .schemas import ScoringRequest, ScoringResponse
 
 
 class App:

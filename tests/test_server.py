@@ -1,4 +1,4 @@
-from condenses_scoring.server import Message, ScoringRequest, App
+from condenses_scoring.schemas import Message, ScoringRequest
 import pytest
 import requests
 import os
