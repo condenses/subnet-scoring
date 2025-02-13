@@ -44,7 +44,7 @@ class ScoringModel:
 
     def guarding(self, prompt: str) -> bool:
         result = self.prompt_guard(prompt)
-        logger.info(f"Prompt guard result: {result}")
+        logger.info(f"Prompt guard result: {result} | prompt: {prompt[:32]}")
         return result[0]["label"] == "JAILBREAK"
 
     @torch.no_grad()
