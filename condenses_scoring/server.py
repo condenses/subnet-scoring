@@ -86,19 +86,14 @@ class App:
             if comp_msg.is_compressed:
                 if self.scoring_model.guarding(comp_msg.content):
                     logger.warning(
-                        "Prompt guard detection",
-                        extra={
-                            "event": "prompt_guard_failed",
-                            "content_preview": comp_msg.content[:100],
-                        },
+                        f"Prompt guard detection | content_preview: {comp_msg.content[:100]} | event: prompt_guard_failed"
                     )
                     return ScoringResponse(score=0.0)
                 compressed_rate = self.calculate_compression_rate(
                     comp_msg.content, orig_msg.content
                 )
                 logger.info(
-                    "Compression rate calculated",
-                    extra={"event": "compression_rate", "value": compressed_rate},
+                    f"Compression rate calculated | value: {compressed_rate} | event: compression_rate"
                 )
                 break
 
@@ -109,12 +104,7 @@ class App:
         )
 
         logger.info(
-            "Scoring completed",
-            extra={
-                "event": "scoring_complete",
-                "original_score": original_score,
-                "compressed_score": compressed_score,
-            },
+            f"Scoring completed | original_score: {original_score} | compressed_score: {compressed_score} | event: scoring_complete"
         )
 
         # Calculate final score
@@ -125,12 +115,7 @@ class App:
         )
 
         logger.info(
-            "Final score calculated",
-            extra={
-                "event": "final_score",
-                "compress_gain": compress_gain,
-                "score": score,
-            },
+            f"Final score calculated | compress_gain: {compress_gain} | score: {score} | event: final_score"
         )
         return ScoringResponse(score=score)
 
