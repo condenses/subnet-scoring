@@ -8,9 +8,11 @@ from loguru import logger
 from .schemas import ScoringRequest, ScoringResponse
 import numpy as np
 
+TEMPERATURE = 1.5
+
 
 def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    return 1 / (1 + np.exp(-x / TEMPERATURE))
 
 
 class App:
